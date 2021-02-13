@@ -1,0 +1,138 @@
+﻿@using miniproyecto.Models;
+
+@model IEnumerable<FotoViewModel>
+
+
+@{
+    ViewBag.Title = "Detalle del albúm \"" + ViewBag.NombreAlbum + "\"";
+}
+
+<div class="container">
+    @{
+        if (Model != null)
+        {
+            <h2>@ViewBag.Title |  @Html.ActionLink("Regresar", "Index", "Home", new { @class = "btn btn-danger" })</h2>
+            <br />
+
+            foreach (var photo in Model)
+            {
+                <div class="card mb-3" style="max-width: 540px;">
+                    <div class="row g-0">
+                        <div class="col-md-4">
+                            <img class="img-thumbnail img-fluid" src="@photo.Url" alt="@photo.Title" height="100px">
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card-body">
+                                <h5 class="card-title">@photo.Title</h5>
+                                <p>
+                                    <button class="btn btn-primary" type="button"
+                                            data-toggle="collapse"
+                                            data-target="#collapseFoto-@photo.Id"
+                                            aria-expanded="false"
+                                            aria-controls="collapseFoto-@photo.Id"
+                                            name="btnComentario"
+                                            value="@photo.Id"
+                                            onclick="getCometario(event)">
+                                        Ver comentarios
+                                    </button>
+                                </p>
+                                <div class="collapse" id="collapseFoto-@photo.Id">
+                                    <div class="card card-body">
+                                        <table class="table  table-responsive" id="table-@photo.Id">
+                                            <thead>
+                                                <tr>
+                                                    <td class="mr-1">ID</td>
+                                                    <td class="mr-1">Comentario</td>
+                                                    <td class="mr-1">Email</td>
+                                                    <td class="mr-1">Nombre</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            <br />
+
+            @Html.ActionLink("Regresar", "Index", "Home", new { @class = "btn btn-danger" })
+        }
+        else
+        {
+            <p class="alert alert-warning">Albúm no contiene información para mostrar</p>
+        }
+    }
+</div>
+
+@section scripts{
+    <script>
+        //$(document).ready(function () {
+
+        //    $('button [name="btnComentario"]').on('click', function (e) {
+
+        //        console.log(e);
+
+        //        //$.getJSON("/home/GetComentarios?idPhoto="+idPhoto,
+        //        //    {},
+        //        //    function (data) {
+        //        //        console.log(data);
+        //        //    });
+
+        //    });
+        //});
+
+        //document.getElementsByName('btnComentario').addEventListener('click', getCometario)
+
+        function getCometario(e) {
+            let idPhoto = e.target.value;
+
+            $.getJSON("/home/GetComentarios?idPhoto=" + idPhoto,
+                {},
+                function (data) {
+
+                    let tableComments = document.getElementById('table-' + idPhoto)
+
+
+                    tableComments.removeChild(tableComments.getElementsByTagName("tbody")[0]);
+
+
+                    let objectList = JSON.parse(data);
+
+                    let tbody = document.createElement('TBODY');
+
+
+                    $(objectList).each((i, el) => {
+
+                        let tr = document.createElement('TR');
+
+                        let td1 = document.createElement('TD')
+                        td1.innerText = el.Id;
+                        let td2 = document.createElement('TD');
+                        td2.innerText = el.Body;
+                        let td3 = document.createElement('TD');
+                        td3.innerText = el.Email;
+                        let td4 = document.createElement('TD');
+                        td4.innerText = el.Name;
+
+                        tr.appendChild(td1);
+                        tr.appendChild(td2);
+                        tr.appendChild(td3);
+                        tr.appendChild(td4);
+
+                        tbody.appendChild(tr);
+
+                    });
+
+                    tableComments.appendChild(tbody);
+
+                });
+        }
+
+    </script>
+
+}
