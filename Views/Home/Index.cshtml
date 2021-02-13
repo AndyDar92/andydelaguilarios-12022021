@@ -6,13 +6,14 @@
     ViewBag.Title = "Página de inicio";
 }
 
+
 <div class="jumbotron mt-2">
     <h1>ASP.NET</h1>
 </div>
 
 <div class="row">
     <div class="col">
-        <h2>Lista de albunes disponibles</h2>
+        <h2>Lista de albums disponibles</h2>
         <br />
         <div class="form-inline">
             <select class="form-control" id="albumCollection">
@@ -28,13 +29,14 @@
     </div>
 </div>
 
+
 @section scripts{
 
     <script type="text/javascript">
         $(document).ready(function () {
             //$.getJSON("https://jsonplaceholder.typicode.com/albums",
             //$.getJSON("https://jsonplaceholder.typicode.com/photos",
-                $.getJSON("https://jsonplaceholder.typicode.com/comments",
+            $.getJSON("https://jsonplaceholder.typicode.com/comments",
                 {},
                 function (data) {
                     console.log(data);
