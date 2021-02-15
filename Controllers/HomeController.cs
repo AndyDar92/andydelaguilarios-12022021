@@ -6,102 +6,93 @@ using System.Linq;
 using System.Net.Http;
 using System.Web;
 using System.Web.Mvc;
+using System.Configuration;
+using miniproyecto.Auxiliar;
 
 namespace miniproyecto.Controllers
 {
     public class HomeController : Controller
     {
-        public ActionResult Index()
+
+        private readonly string _urlPrincipal;
+        private readonly string _apiALBUMS;
+        private readonly string _apiFOTOS;
+        private readonly string _apiCOMMENTS;
+
+        public HomeController()
         {
 
+            _urlPrincipal = ConfigurationManager.AppSettings.Get("urlPrincipal"); //"https://jsonplaceholder.typicode.com";
+            _apiALBUMS = ConfigurationManager.AppSettings.Get("apiAlbums");//"albums";
+            _apiFOTOS = ConfigurationManager.AppSettings.Get("apiFotos");//"photos";
+            _apiCOMMENTS = ConfigurationManager.AppSettings.Get("apiComments");//"comments";
+        }
+
+
+        public ActionResult Index()
+        {
             IEnumerable<AlbumViewModel> albums = null;
+            var GetHttp = new GetDataHttp<AlbumViewModel>(_urlPrincipal, _apiALBUMS);
 
-            using (var client = new HttpClient())
+            string error = string.Empty;
+            albums = GetHttp.GetT(ref error);
+
+            if (string.IsNullOrEmpty(error))
             {
-                client.BaseAddress = new Uri("https://jsonplaceholder.typicode.com");
-                var response = client.GetAsync("albums");
-                response.Wait();
-
-                var result = response.Result;
-
-                if (result.IsSuccessStatusCode)
-                {
-                    var read = result.Content.ReadAsStringAsync();
-                    read.Wait();
-
-                    albums = JsonConvert.DeserializeObject<IList<AlbumViewModel>>(read.Result);
-                }
-                else
-                {
-                    albums = Enumerable.Empty<AlbumViewModel>();
-                    ModelState.AddModelError(string.Empty, "Error al obtener datos del servidor");
-                }
-
+                ModelState.AddModelError(string.Empty, error);
             }
+
             return View(albums);
 
         }
 
-        public ActionResult Detalle(int idAlbum, string nombreAlbum="") {
+        public ActionResult Detalle(int? idAlbum, string nombreAlbum = "")
+        {
 
             IEnumerable<FotoViewModel> photos = null;
 
-            using (var client = new HttpClient())
+
+            if (idAlbum != null)
             {
-                client.BaseAddress = new Uri("https://jsonplaceholder.typicode.com");
-                var response = client.GetAsync("photos");
-                response.Wait();
+                var GetHttp = new GetDataHttp<FotoViewModel>(_urlPrincipal, _apiFOTOS);
 
-                var result = response.Result;
+                string error = string.Empty;
+                photos = GetHttp.GetT(ref error);
 
-                if (result.IsSuccessStatusCode)
+                photos.Where(x => x.AlbumId == idAlbum);
+                ViewBag.NombreAlbum = nombreAlbum;
+
+                if (string.IsNullOrEmpty(error))
                 {
-                    var read = result.Content.ReadAsStringAsync();
-                    read.Wait();
-
-                    photos = JsonConvert.DeserializeObject<IList<FotoViewModel>>(read.Result);
-
-                    photos.Where(x => x.AlbumId == idAlbum);
-                    ViewBag.NombreAlbum = nombreAlbum;
+                    ModelState.AddModelError(string.Empty, error);
                 }
-                else
-                {
-                    photos = Enumerable.Empty<FotoViewModel>();
-                    ModelState.AddModelError(string.Empty, "Error al obtener datos del servidor");
-                }
+
+                return View(photos);
 
             }
-
+            else
+            {
+                ModelState.AddModelError(string.Empty, "Parámetros no válidos");
+            }
 
             return View(photos);
         }
 
-        public ActionResult GetComentarios(int idPhoto) {
+        public ActionResult GetComentarios(int idPhoto)
+        {
 
             IEnumerable<ComentarioViewModel> comments = null;
 
-            using (var client = new HttpClient())
+            var GetHttp = new GetDataHttp<ComentarioViewModel>(_urlPrincipal, _apiCOMMENTS);
+
+            string error = string.Empty;
+            comments = GetHttp.GetT(ref error);
+
+            comments = comments.Where(x => x.PostId == idPhoto);
+
+            if (!string.IsNullOrEmpty(error))
             {
-                client.BaseAddress = new Uri("https://jsonplaceholder.typicode.com");
-                var response = client.GetAsync("comments");
-                response.Wait();
-
-                var result = response.Result;
-
-                if (result.IsSuccessStatusCode)
-                {
-                    var read = result.Content.ReadAsStringAsync();
-                    read.Wait();
-
-                    comments = JsonConvert.DeserializeObject<IList<ComentarioViewModel>>(read.Result);
-                    comments = comments.Where(x => x.PostId == idPhoto);
-                }
-                else
-                {
-                    comments = Enumerable.Empty<ComentarioViewModel>();
-                    ModelState.AddModelError(string.Empty, "Error al obtener datos del servidor");
-                }
-
+                ModelState.AddModelError(string.Empty, error);
             }
 
             return Json(JsonConvert.SerializeObject(comments), JsonRequestBehavior.AllowGet);
@@ -109,16 +100,14 @@ namespace miniproyecto.Controllers
 
         public ActionResult About()
         {
-            ViewBag.Message = "Your application description page.";
+            var model = new AcercaDeViewModel()
+            {
+                Nombre = "Andy",
+                Apellidos = "Del Aguila Rios"
+            };
 
-            return View();
+            return View(model);
         }
 
-        public ActionResult Contact()
-        {
-            ViewBag.Message = "Your contact page.";
-
-            return View();
-        }
     }
 }
